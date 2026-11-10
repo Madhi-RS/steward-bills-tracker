@@ -1,0 +1,102 @@
+{
+  "slug": "steward-bills-tracker",
+  "name": "Steward Bills Tracker",
+  "owner_org": "Madhi RS",
+  "version": "0.2.0",
+  "page_mode": "linked",
+  "pages": true,
+  "site_url": "http://localhost:3300",
+  "redirect_uris": [
+    "http://localhost:3300/auth/callback"
+  ],
+  "events": [
+    "business.purged",
+    "module.disabled",
+    "proposal.decided",
+    "task.changed"
+  ],
+  "operations": [
+    "createDeletionReceipt",
+    "createProposal",
+    "getProposal",
+    "listPeople",
+    "listUnits"
+  ],
+  "proposal_kinds": [
+    "task.create"
+  ],
+  "manifest": {
+    "pulls": [
+      {
+        "operation": "createDeletionReceipt",
+        "purpose": "Confirm to Steward that Bills Tracker deleted a business's locally stored bill records"
+      },
+      {
+        "operation": "createProposal",
+        "purpose": "Propose a pay-invoice task for an owner or admin to approve"
+      },
+      {
+        "operation": "getProposal",
+        "purpose": "Link an accepted task proposal to the local bill that created it"
+      },
+      {
+        "operation": "listPeople",
+        "purpose": "Let an owner or admin choose the member who should receive a bill task"
+      },
+      {
+        "operation": "listUnits",
+        "purpose": "Choose the Steward company in which a bill task is created"
+      }
+    ],
+    "events": [
+      {
+        "kind": "business.purged",
+        "purpose": "Delete locally stored bill records when a Steward business is purged"
+      },
+      {
+        "kind": "module.disabled",
+        "purpose": "Delete locally stored bill records when an owner disables Bills Tracker with deletion"
+      },
+      {
+        "kind": "proposal.decided",
+        "purpose": "Record whether Steward created or rejected a proposed bill task"
+      },
+      {
+        "kind": "task.changed",
+        "purpose": "Update the linked bill when its Steward task changes or completes"
+      }
+    ],
+    "stores": [
+      {
+        "what": "Bills, payment amounts, deadlines, payment status, and Steward task/proposal identifiers entered or created in Steward Bills Tracker",
+        "from_kinds": [
+          "task"
+        ],
+        "retention_days": 365,
+        "on_grant_end": "delete"
+      }
+    ],
+    "ai": {
+      "uses": false,
+      "purposes": [],
+      "sends_content": false
+    },
+    "returns": [
+      {
+        "kind": "task.create",
+        "purpose": "Pay-invoice tasks for a Steward member, created only after owner or admin approval"
+      }
+    ],
+    "never_touches": [
+      "personal_spaces",
+      "hr_restricted",
+      "health"
+    ],
+    "deletion_hours": 24,
+    "storage": {
+      "per_business": "row_key",
+      "encrypted_per_business": false,
+      "keeps_copies_of": []
+    }
+  }
+}
