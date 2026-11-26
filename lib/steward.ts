@@ -16,7 +16,7 @@ export class StewardConfigurationError extends Error {
   }
 }
 
-function requiredEnvironment(name: "STEWARD_CLIENT_ID" | "STEWARD_CLIENT_SECRET" | "STEWARD_CORE_URL" | "STEWARD_ISSUER" | "STEWARD_REDIRECT_URI" | "STEWARD_WEB_CLIENT_ID") {
+function requiredEnvironment(name: "STEWARD_CLIENT_ID" | "STEWARD_CLIENT_SECRET" | "STEWARD_CORE_URL" | "STEWARD_ISSUER" | "STEWARD_MODULE_ID" | "STEWARD_REDIRECT_URI" | "STEWARD_WEB_CLIENT_ID") {
   const value = process.env[name]?.trim();
 
   if (!value) {
@@ -72,7 +72,7 @@ export function getStewardSessions() {
   return runtime.sessions;
 }
 
-/** Core client used for task proposals, directory reads, and proposal reconciliation. */
+/** Core client used for task proposals, directory reads, board posts, and reconciliation. */
 export function getStewardCore() {
   if (!runtime.core) {
     const configuration = readConfiguration();
@@ -89,7 +89,7 @@ export function getStewardCore() {
   return runtime.core;
 }
 
-function signingKey() {
+export function getStewardSigningKey() {
   const value = process.env.STEWARD_SIGNING_KEY?.trim();
 
   if (!value) {
@@ -97,6 +97,11 @@ function signingKey() {
   }
 
   return SigningKey.fromBase64(value);
+}
+
+/** The opaque module id Steward expects in the signature on a board post. */
+export function getStewardModuleId() {
+  return requiredEnvironment("STEWARD_MODULE_ID");
 }
 
 /** Build an event receiver wired to the same session manager (also useful to lifecycle tests). */
@@ -109,7 +114,7 @@ export function createStewardEventReceiver(key: SigningKey, sessions: Pick<Stewa
 /** One signed-event receiver for this module process. */
 export function getStewardEventReceiver() {
   if (!runtime.receiver) {
-    runtime.receiver = createStewardEventReceiver(signingKey(), getStewardSessions());
+    runtime.receiver = createStewardEventReceiver(getStewardSigningKey(), getStewardSessions());
   }
 
   return runtime.receiver;

@@ -145,9 +145,9 @@ The test suite covers pending and status calculation, invalid amounts and missin
 
 ## Steward authentication and bill-task sync
 
-No authentication is faked or assumed. The committed [Steward registration](steward/registration.json) prepares this independent Next.js application as a linked module that keeps its own bill records and can propose `task.create` work. It reads the visible member/unit directory to choose an assignee and company, and listens for `proposal.decided` and `task.changed` so an accepted task can be linked back to its bill.
+No authentication is faked or assumed. The committed [Steward registration](steward/registration.json) prepares this independent Next.js application as a linked module that keeps its own bill records and can propose `task.create` work. It reads the visible member/unit directory to choose an assignee and company, and can group two to 25 task proposals in one `createProposalPlan` review. Each payment task is proposed as a 15-minute, low-energy `@computer` next action; the reviewer can adjust those attributes before acceptance. It listens for `proposal.decided`, `proposal_plan.decided`, and `task.changed` so accepted tasks can be linked back to their bills.
 
-Before registering it in the sandbox, update the installed `steward` CLI to SDK 1.20.0 or newer. See [steward/README.md](steward/README.md) for the exact register, update, credential, and local forwarding commands.
+Before registering it in the sandbox, update the installed `steward` CLI and TypeScript SDK to 1.31.1. See [steward/README.md](steward/README.md) for the exact register, update, credential, and local forwarding commands.
 
 After Steward issues the linked-app values, put them only in the ignored `.env` file: `STEWARD_PAGE_MODE=linked`, `STEWARD_CORE_URL`, `STEWARD_ISSUER`, `STEWARD_WEB_CLIENT_ID`, `STEWARD_CLIENT_ID`, `STEWARD_CLIENT_SECRET`, `STEWARD_SIGNING_KEY`, `STEWARD_REDIRECT_URI=http://localhost:3300/auth/callback`, and `STEWARD_SIGN_IN_ONLY=0`. The login endpoint uses the official TypeScript SDK's PKCE flow. It stores the state and verifier in a short-lived server-side store, then `/auth/callback` calls `StewardSignIn.finish()` before it creates an opaque, HttpOnly, SameSite=Lax app-session cookie. Access and refresh tokens remain server-side and are never logged or put in browser storage. A refused callback displays the Steward refusal code.
 
@@ -188,7 +188,7 @@ The current session store is process-local, which is appropriate for local devel
    & $Steward listen --module steward-bills-tracker --forward-to 127.0.0.1:3300
    ```
 
-4. Person A opens `http://localhost:3300/auth/login`, signs in normally, creates or selects a bill, chooses **Assign**, selects **Test Member (sandbox)**, and chooses **Propose task**. The bill should show `Task: PENDING REVIEW`.
+4. Person A opens `http://localhost:3300/auth/login`, signs in normally, creates or selects a bill, chooses **Assign**, selects **Test Member (sandbox)**, and chooses **Propose task**. The bill should show `Task: PENDING REVIEW`. To review several at once, select two to 25 bills and choose **Propose selected tasks**; Steward shows them on one plan page.
 
 5. Person A opens Steward → **Setup and admin → Modules → Waiting for your review**, opens the `task.create` proposal, and accepts it. The event terminal should show successful deliveries (`-> 200`), and refreshing Bills Tracker should show `Task: OPEN`.
 
@@ -245,6 +245,7 @@ lib/                         Shared application code
   db.ts                      Reusable Prisma Client instance
   auth.ts                    Server-only opaque auth session store
   steward.ts                 Server-only Steward SDK configuration
+  hirescope-board.ts         Signed HireScope board questions and display-only answer inbox
   format.ts                  Indian Rupee and date display formatting
   utils.ts                   General utility functions
   validations/bill.ts        Runtime input and query validation schemas

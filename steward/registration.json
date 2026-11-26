@@ -2,7 +2,7 @@
   "slug": "steward-bills-tracker",
   "name": "Steward Bills Tracker",
   "owner_org": "Madhi RS",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "page_mode": "linked",
   "pages": true,
   "site_url": "http://localhost:3300",
@@ -10,34 +10,60 @@
     "http://localhost:3300/auth/callback"
   ],
   "events": [
+    "board.mention",
     "business.purged",
     "module.disabled",
+    "proposal_plan.decided",
     "proposal.decided",
     "task.changed"
   ],
   "operations": [
+    "createBoardPost",
     "createDeletionReceipt",
     "createProposal",
+    "createProposalPlan",
+    "getBoardPost",
     "getProposal",
+    "getProposalPlan",
     "listPeople",
     "listUnits"
   ],
   "proposal_kinds": [
     "task.create"
   ],
+  "board": {
+    "template": "collaborator",
+    "why": "Exchanges read-only onboarding-status and pending-bill-count answers with HireScope"
+  },
   "manifest": {
     "pulls": [
       {
+        "operation": "createBoardPost",
+        "purpose": "Ask HireScope for onboarding status and answer its fixed pending-bill-count question"
+      },
+      {
         "operation": "createDeletionReceipt",
         "purpose": "Confirm to Steward that Bills Tracker deleted a business's locally stored bill records"
+      },
+      {
+        "operation": "getBoardPost",
+        "purpose": "Read a signed Board mention before matching a HireScope answer or validating the fixed pending-bill-count question"
       },
       {
         "operation": "createProposal",
         "purpose": "Propose a pay-invoice task for an owner or admin to approve"
       },
       {
+        "operation": "createProposalPlan",
+        "purpose": "Group up to 25 pay-invoice task proposals for one owner or admin review"
+      },
+      {
         "operation": "getProposal",
         "purpose": "Link an accepted task proposal to the local bill that created it"
+      },
+      {
+        "operation": "getProposalPlan",
+        "purpose": "Reconcile each pay-invoice task proposal after its grouped review is decided"
       },
       {
         "operation": "listPeople",
@@ -49,6 +75,10 @@
       }
     ],
     "events": [
+      {
+        "kind": "board.mention",
+        "purpose": "Read and display matched HireScope answers, and answer HireScope's fixed pending-bill-count question without changing bill records"
+      },
       {
         "kind": "business.purged",
         "purpose": "Delete locally stored bill records when a Steward business is purged"
@@ -62,13 +92,17 @@
         "purpose": "Record whether Steward created or rejected a proposed bill task"
       },
       {
+        "kind": "proposal_plan.decided",
+        "purpose": "Record which bill tasks Steward created or rejected from a grouped review"
+      },
+      {
         "kind": "task.changed",
         "purpose": "Update the linked bill when its Steward task changes or completes"
       }
     ],
     "stores": [
       {
-        "what": "Bills, payment amounts, deadlines, payment status, and Steward task/proposal identifiers entered or created in Steward Bills Tracker",
+        "what": "Bills, payment amounts, deadlines, payment status, Steward task/proposal identifiers, and display-only HireScope board questions and answers",
         "from_kinds": [
           "task"
         ],

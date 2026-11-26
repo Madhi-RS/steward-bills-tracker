@@ -96,4 +96,31 @@ describe("Steward event lifecycle", () => {
       data: { paidAmount: "1250.50", pendingAmount: "0.00", taskStatus: "COMPLETED" },
     });
   });
+
+  it("reconciles every accepted or rejected task from a grouped proposal plan", async () => {
+    const core = {
+      proposalPlan: vi.fn().mockResolvedValue({
+        id: "mpp_01plan",
+        title: "Assign 2 invoice payment tasks",
+        status: "decided",
+        created_at: new Date().toISOString(),
+        proposals: [
+          { id: "mpr_accepted", kind: "task.create", status: "accepted", created_at: new Date().toISOString(), result: { type: "task", id: "tsk_accepted" } },
+          { id: "mpr_rejected", kind: "task.create", status: "rejected", created_at: new Date().toISOString() },
+        ],
+      }),
+    };
+
+    await handleStewardEvent(envelope("proposal_plan.decided", 7, { plan: "mpp_01plan", status: "decided" }), { core });
+
+    expect(core.proposalPlan).toHaveBeenCalledWith("business_1", "mpp_01plan");
+    expect(billRepository.updateMany).toHaveBeenCalledWith({
+      where: { businessId: "business_1", taskProposalId: "mpr_accepted" },
+      data: { taskId: "tsk_accepted", taskStatus: "OPEN" },
+    });
+    expect(billRepository.updateMany).toHaveBeenCalledWith({
+      where: { businessId: "business_1", taskProposalId: "mpr_rejected" },
+      data: { taskStatus: "REJECTED" },
+    });
+  });
 });

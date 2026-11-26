@@ -6,9 +6,11 @@ import { formatIndianRupees } from "@/lib/format";
 import type { BillResponse, BillsListResponse, BillStatus } from "@/types/bill";
 
 import { BillFormDialog } from "./bill-form-dialog";
+import { BatchTaskAssignmentDialog } from "./batch-task-assignment-dialog";
 import { BillsTable } from "./bills-table";
 import { SummaryCard } from "./summary-card";
 import { TaskAssignmentDialog } from "./task-assignment-dialog";
+import { HireScopePanel } from "./hirescope-panel";
 
 type StatusFilter = "ALL" | BillStatus;
 
@@ -30,6 +32,8 @@ export function BillsDashboard({ canManage, personName }: { canManage: boolean; 
   const [billToDelete, setBillToDelete] = useState<BillResponse | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [billToAssign, setBillToAssign] = useState<BillResponse | null>(null);
+  const [selectedBillIds, setSelectedBillIds] = useState<string[]>([]);
+  const [isBatchAssignmentOpen, setIsBatchAssignmentOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const loadBills = useCallback(async (showRefreshingState = false) => {
@@ -123,6 +127,7 @@ export function BillsDashboard({ canManage, personName }: { canManage: boolean; 
   }
 
   const hasActiveFilters = Boolean(search) || statusFilter !== "ALL" || sortDirection !== "asc";
+  const selectedBills = dashboard.bills.filter((bill) => selectedBillIds.includes(bill.id));
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -154,9 +159,14 @@ export function BillsDashboard({ canManage, personName }: { canManage: boolean; 
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Your bills at a glance</h1>
             <p className="mt-2 text-slate-600">Track what is due, what is paid, and what needs attention.</p>
           </div>
-          <button className="self-start rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-50 sm:self-auto" disabled={isRefreshing} onClick={() => void loadBills(true)} type="button">
-            {isRefreshing ? "Refreshing…" : "Refresh"}
-          </button>
+          <div className="flex self-start items-center gap-2 sm:self-auto">
+            {canManage && selectedBillIds.length >= 2 ? <button className="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800" onClick={() => setIsBatchAssignmentOpen(true)} type="button">
+              Propose selected tasks ({selectedBillIds.length})
+            </button> : null}
+            <button className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-50" disabled={isRefreshing} onClick={() => void loadBills(true)} type="button">
+              {isRefreshing ? "Refreshing…" : "Refresh"}
+            </button>
+          </div>
         </section>
 
         {notice ? <div className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"><span>{notice}</span><button aria-label="Dismiss success message" className="font-bold" onClick={() => setNotice("")} type="button">×</button></div> : null}
@@ -204,7 +214,7 @@ export function BillsDashboard({ canManage, personName }: { canManage: boolean; 
           </div>
 
           {isLoading ? <div className="p-12 text-center text-sm text-slate-600">Loading bills…</div> : null}
-          {!isLoading && displayedBills.length > 0 ? <BillsTable bills={displayedBills} canManage={canManage} onAssign={setBillToAssign} onDelete={setBillToDelete} onEdit={setFormBill} /> : null}
+          {!isLoading && displayedBills.length > 0 ? <BillsTable bills={displayedBills} canManage={canManage} onAssign={setBillToAssign} onDelete={setBillToDelete} onEdit={setFormBill} onSelectionChange={setSelectedBillIds} selectedBillIds={selectedBillIds} /> : null}
           {!isLoading && displayedBills.length === 0 ? (
             <div className="px-6 py-14 text-center">
               <h3 className="text-lg font-semibold text-slate-900">{dashboard.bills.length === 0 ? "No bills recorded yet" : "No bills match these filters"}</h3>
@@ -213,10 +223,13 @@ export function BillsDashboard({ canManage, personName }: { canManage: boolean; 
             </div>
           ) : null}
         </section>
+
+        <HireScopePanel canManage={canManage} />
       </div>
 
       {formBill ? <BillFormDialog bill={formBill === "new" ? undefined : formBill} key={formBill === "new" ? "new" : formBill.id} onClose={() => setFormBill(null)} onSaved={handleSaved} /> : null}
       {billToAssign ? <TaskAssignmentDialog bill={billToAssign} onAssigned={async () => { await loadBills(true); setNotice("Task proposed. Accept it in Steward's review queue."); }} onClose={() => setBillToAssign(null)} /> : null}
+      {isBatchAssignmentOpen ? <BatchTaskAssignmentDialog bills={selectedBills} onAssigned={async () => { setSelectedBillIds([]); await loadBills(true); setNotice("Task plan proposed. Review the selected tasks together in Steward."); }} onClose={() => setIsBatchAssignmentOpen(false)} /> : null}
 
       {billToDelete ? (
         <div className="fixed inset-0 z-50 flex items-end bg-slate-950/40 p-0 sm:items-center sm:justify-center sm:p-6">

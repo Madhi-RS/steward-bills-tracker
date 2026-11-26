@@ -28,3 +28,22 @@ model Bill {
   @@index([businessId, taskAssigneeId])
   @@index([payBefore])
 }
+
+/// Board messages are kept separately from bills.  A received answer is display-only:
+/// it never changes a Bill or triggers a Steward proposal/task.
+model HireScopeInquiry {
+  id              String    @id @default(uuid()) @db.Uuid
+  businessId      String    @db.VarChar(64)
+  correlationToken String   @db.VarChar(64)
+  questionText    String    @db.VarChar(4000)
+  questionPostId  String?   @unique @db.VarChar(64)
+  answerPostId    String?   @unique @db.VarChar(64)
+  mentionEventId  String?   @unique @db.VarChar(64)
+  answerText      String?   @db.Text
+  answeredAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([businessId, correlationToken])
+  @@index([businessId, answerPostId])
+}

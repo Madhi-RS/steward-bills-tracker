@@ -15,7 +15,7 @@
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
-    "@pente-ai-inc/module-sdk": "file:../../Documents/GitHub/steward-module-sdk/typescript/pente-ai-inc-module-sdk-1.30.0.tgz",
+    "@pente-ai-inc/module-sdk": "file:vendor/pente-ai-inc-module-sdk-1.31.1.tgz",
     "@prisma/client": "6.19.0",
     "next": "16.4.5",
     "react": "19.3.1",
